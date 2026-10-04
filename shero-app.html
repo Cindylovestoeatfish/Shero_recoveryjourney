@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shero App</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f0ebe6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .phone-shell {
+    width: 390px;
+    height: 844px;
+    background: #FDF8F5;
+    border-radius: 48px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.25), 0 0 0 2px #d4c8c0, inset 0 0 0 1px rgba(255,255,255,0.5);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    background: #FDF8F5;
+    padding: 14px 24px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #3D2B2B;
+    flex-shrink: 0;
+  }
+
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+
+  /* Screens */
+  .screen {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    background: #fff;
+    border-top: 1px solid #f0e8e2;
+    display: flex;
+    padding: 10px 0 20px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-icon { font-size: 22px; transition: transform 0.2s; }
+  .nav-label { font-size: 10px; font-weight: 600; color: #b8a8a0; transition: color 0.2s; }
+
+  .nav-item.active .nav-label { color: #4A7C59; }
+  .nav-item.active .nav-icon { transform: scale(1.15); }
+
+  /* ===== HOME SCREEN ===== */
+  .home-header {
+    background: #FDF8F5;
+    padding: 20px 24px 28px;
+    color: #3D2B2B;
+  }
+
+  .home-greeting { font-size: 13px; font-weight: 500; opacity: 0.85; margin-bottom: 4px; }
+  .home-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
+
+  .streak-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(74,124,89,0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4A7C59;
+  }
+
+  .section-card {
+    margin: 16px 20px 0;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #b8a8a0;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 14px;
+  }
+
+  .mood-row {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .mood-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 8px 6px;
+    border-radius: 14px;
+    flex: 1;
+  }
+
+  .mood-btn:hover { background: #fdf0f3; }
+  .mood-btn.selected { background: #e8f5e8; }
+  .mood-emoji { font-size: 28px; }
+  .mood-label { font-size: 10px; font-weight: 600; color: #b8a8a0; }
+  .mood-btn.selected .mood-label { color: #4A7C59; }
+
+  .prompt-box {
+    background: linear-gradient(135deg, #fdf0f8 0%, #f0eeff 100%);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .prompt-q {
+    font-size: 14px;
+    font-weight: 600;
+    color: #3D2B2B;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .journal-input {
+    width: 100%;
+    border: none;
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 13px;
+    color: #3D2B2B;
+    resize: none;
+    height: 80px;
+    font-family: inherit;
+    outline: none;
+    line-height: 1.5;
+  }
+
+  .journal-input::placeholder { color: #c8bab5; }
+
+  .save-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #A8C5A0, #7BAE7F);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    font-family: inherit;
+  }
+
+  .save-btn:hover { opacity: 0.9; }
+
+  .home-bottom-spacer { height: 16px; }
+
+  /* ===== STAGES ===== */
+  .stages-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .stages-line {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    height: 3px;
+    background: #f0e4e8;
+    z-index: 0;
+  }
+
+  .stages-line-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #A8C5A0, #7BAE7F);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .stage-dot-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 1;
+    cursor: pointer;
+  }
+
+  .stage-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f0e4e8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 3px solid #f0e4e8;
+    transition: all 0.3s;
+  }
+
+  .stage-dot.done {
+    background: linear-gradient(135deg, #A8C5A0, #7BAE7F);
+    border-color: #A8C5A0;
+  }
+
+  .stage-dot.current {
+    background: white;
+    border-color: #4A7C59;
+    box-shadow: 0 0 0 4px rgba(74,124,89,0.15);
+  }
+
+  .stage-dot-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #b8a8a0;
+    text-align: center;
+    max-width: 54px;
+    line-height: 1.3;
+  }
+
+  .stage-dot-label.current-label { color: #4A7C59; }
+
+  .current-stage-card {
+    background: linear-gradient(135deg, #fff0f5, #f5eeff);
+    border-radius: 16px;
+    padding: 16px;
+    border: 1.5px solid #f0d8e8;
+    margin-bottom: 14px;
+  }
+
+  .current-stage-tag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #7BAE7F;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+  }
+
+  .current-stage-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: #3D2B2B;
+    margin-bottom: 4px;
+  }
+
+  .current-stage-desc {
+    font-size: 13px;
+    color: #7a6060;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  .stage-suggestion {
+    background: rgba(255,255,255,0.8);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #f0d8e8;
+  }
+
+  .stage-suggestion-text {
+    flex: 1;
+    font-size: 12px;
+    color: #5a4545;
+    line-height: 1.4;
+  }
+
+  .stage-suggest-btn {
+    background: linear-gradient(135deg, #A8C5A0, #7BAE7F);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 7px 13px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+
+  .stage-self-btn {
+    width: 100%;
+    background: transparent;
+    border: 1.5px solid #A8C5A0;
+    border-radius: 12px;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4A7C59;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .stage-self-btn:hover { background: #e8f5e8; }
+
+  .stage-self-btn.locked {
+    background: #f5f0f5;
+    border-color: #e0d0e0;
+    color: #b8a0b8;
+    cursor: not-allowed;
+  }
+
+  .stage-self-btn.locked:hover { background: #f5f0f5; }
+
+  .days-lock-bar {
+    background: #fdf0f8;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1.5px solid #f0d8e8;
+  }
+
+  .days-lock-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .days-lock-label { font-size: 13px; font-weight: 700; color: #3D2B2B; }
+  .days-lock-count { font-size: 22px; font-weight: 800; color: #4A7C59; }
+
+  .days-lock-track {
+    height: 8px;
+    background: #c8e0c8;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .days-lock-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #A8C5A0, #7BAE7F);
+    border-radius: 6px;
+    transition: width 0.5s;
+  }
+
+  .days-lock-note {
+    font-size: 11px;
+    color: #9a7a85;
+    line-height: 1.4;
+  }
+
+  /* Grieving soft advisory */
+  .grief-advisory {
+    background: #fdf5f8;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1.5px dashed #e8c8d8;
+    display: none;
+  }
+
+  .grief-advisory.visible { display: block; }
+
+  .grief-advisory-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .grief-days-label { font-size: 13px; font-weight: 700; color: #3D2B2B; }
+  .grief-days-num { font-size: 22px; font-weight: 800; color: #7BAE7F; }
+
+  .grief-track {
+    height: 6px;
+    background: #c8e0c8;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .grief-track-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7BAE7F, #A8C5A0);
+    border-radius: 6px;
+    transition: width 0.5s;
+  }
+
+  .grief-advisory-note {
+    font-size: 12px;
+    color: #9a7a85;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* Confirmation popup */
+  .confirm-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(61,43,43,0.4);
+    z-index: 150;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .confirm-overlay.visible { display: flex; }
+
+  .confirm-sheet {
+    background: white;
+    border-radius: 28px 28px 0 0;
+    padding: 28px 24px 36px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .confirm-handle {
+    width: 36px;
+    height: 4px;
+    background: #e0d0d0;
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .confirm-emoji { font-size: 40px; margin-bottom: 12px; }
+  .confirm-title { font-size: 18px; font-weight: 800; color: #3D2B2B; margin-bottom: 8px; }
+  .confirm-body { font-size: 14px; color: #7a6060; line-height: 1.6; margin-bottom: 24px; }
+
+  .confirm-yes {
+    width: 100%;
+    background: linear-gradient(135deg, #A8C5A0, #7BAE7F);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    margin-bottom: 10px;
+  }
+
+  .confirm-no {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #9a7a85;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 10px;
+  }
+
+  /* Compose sheet */
+  .compose-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(61,43,43,0.4);
+    z-index: 150;
+    display: none;
+    align-items: flex-end;
+  }
+
+  .compose-overlay.visible { display: flex; }
+
+  .compose-sheet {
+    background: white;
+    border-radius: 28px 28px 0 0;
+    padding: 20px 20px 32px;
+    width: 100%;
+  }
+
+  .compose-handle {
+    width: 36px;
+    height: 4px;
+    background: #e0d0d0;
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  .compose-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .compose-title { font-size: 16px; font-weight: 800; color: #3D2B2B; }
+
+  .compose-anon-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #9a7a85;
+    cursor: pointer;
+  }
+
+  .compose-textarea {
+    width: 100%;
+    border: 1.5px solid #c8e0c8;
+    background: #fdf8f5;
+    border-radius: 16px;
+    padding: 14px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #3D2B2B;
+    resize: none;
+    height: 110px;
+    outline: none;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .compose-textarea:focus { border-color: #A8C5A0; }
+  .compose-textarea::placeholder { color: #c8b8b8; }
+
+  .compose-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .compose-char { font-size: 12px; color: #b8a8a0; }
+
+  .compose-post-btn {
+    background: linear-gradient(135deg, #A8C5A0, #7BAE7F);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .compose-post-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* ===== ACCEPTANCE PATH CHOOSER ===== */
+  .acceptance-section { margin-top: 14px; }
+
+  .path-chooser {
+    background: linear-gradient(135deg, #fff8f0, #fff0f8);
+    border-radius: 16px;
+    padding: 16px;
+    border: 1.5px solid #f5e0ee;
+    margin-bottom: 14px;
+  }
+
+  .path-chooser-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #3D2B2B;
+    margin-bottom: 4px;
+  }
+
+  .path-chooser-sub {
+    font-size: 12px;
+    color: #9a7a85;
+    margin-bottom: 14px;
+    line-height: 1.4;
+  }
+
+  .path-options { display: flex; gap: 10px; }
+
+  .path-option {
+    flex: 1;
+    background: white;
+    border: 2px solid #c8e0c8;
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .path-option:hover { border-color: #A8C5A0; background: #f0f8f2; }
+  .path-option.selected { border-color: #4A7C59; background: #e8f5e8; }
+
+  .path-option-icon { font-size: 26px; margin-bottom: 6px; }
+  .path-option-name { font-size: 12px; font-weight: 800; color: #3D2B2B; margin-bottom: 4px; }
+  .path-option-desc { font-size: 10px; color: #9a7a85; line-height: 1.4; }
+
+  /* Daily ritual */
+  .ritual-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1.5px solid #c8e0c8;
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  .ritual-card.visible { display: block; }
+
+  .ritual-day {
+    font-size: 10px;
+    font-weight: 700;
+    color: #7BAE7F;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+  }
+
+  .ritual-prompt {
+    font-size: 15px;
+    font-weight: 700;
+    color: #3D2B2B;
+    margin-bottom: 10px;
+  }
+
+  .ritual-prompt span {
+    color: #4A7C59;
+    font-style: italic;
+  }
+
+  .ritual-input {
+    width: 100%;
+    border: 1.5px solid #c8e0c8;
+    background: #fdf8f5;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 14px;
+    color: #3D2B2B;
+    font-family: inherit;
+    outline: none;
+    resize: none;
+    height: 70px;
+    line-height: 1.5;
+  }
+
+  .ritual-input:focus { border-color: #A8C5A0; }
+
+  .ritual-save-btn {
+    margin-top: 10px;
+    width: 100%;
+    background: linear-gradient(135deg, #A8C5A0, #7BAE7F);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* Score card */
+  .score-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1.5px solid #c8e0c8;
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  .score-card.visible { display: block; }
+
+  .score-title { font-size: 13px; font-weight: 800; color: #3D2B2B; margin-bottom: 12px; }
+
+  .score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .score-label { font-size: 12px; color: #7a6060; }
+  .score-bar-wrap { flex: 1; height: 8px; background: #f0e4e8; border-radius: 6px; margin: 0 10px; }
+  .score-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #A8C5A0, #7BAE7F); transition: width 0.5s; }
+  .score-pct { font-size: 12px; font-weight: 700; color: #4A7C59; width: 30px; text-align: right; }
+
+  .score-total {
+    margin-top: 12px;
+    background: #fdf0f8;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .score-total-num { font-size: 28px; font-weight: 800; color: #4A7C59; }
+  .score-total-label { font-size: 11px; color: #9a7a85; margin-top: 2px; }
+
+  /* 30-day calendar dots */
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 5px;
+    margin-top: 12px;
+  }
+
+  .cal-dot {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #f0e4e8;
+  }
+
+  .cal-dot.done { background: linear-gradient(135deg, #A8C5A0, #7BAE7F); }
+  .cal-dot.today { background: #4A7C59; box-shadow: 0 0 0 2px rgba(74,124,89,0.3); }
+
+  /* ===== TRACKING CHART ===== */
+  .track-toggle {
+    display: flex;
+    background: #f5eded;
+    border-radius: 12px;
+    padding: 3px;
+    margin-bottom: 16px;
+    gap: 2px;
+  }
+
+  .track-tab {
+    flex: 1;
+    text-align: center;
+    padding: 7px 4px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #b8a8a0;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .track-tab.active {
+    background: white;
+    color: #4A7C59;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  .track-chart {
+    display: none;
+  }
+
+  .track-chart.active { display: block; }
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 90px;
+    margin-bottom: 6px;
+  }
+
+  .bar-chart .chart-bar { flex: 1; border-radius: 4px 4px 0 0; min-width: 0; }
+
+  .bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #b8a8a0;
+    font-weight: 600;
+  }
+
+  .track-summary {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .track-stat {
+    flex: 1;
+    background: #fdf5f8;
+    border-radius: 12px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  .track-stat-num { font-size: 20px; font-weight: 800; color: #4A7C59; }
+  .track-stat-label { font-size: 10px; color: #9a8a85; margin-top: 2px; line-height: 1.3; }
+
+  /* ===== JOURNEY SCREEN ===== */
+  .journey-header {
+    background: linear-gradient(135deg, #8FAF8C 0%, #6B9E85 100%);
+    padding: 20px 24px 28px;
+    color: white;
+  }
+
+  .journey-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .journey-sub { font-size: 13px; opacity: 0.85; }
+
+  .emotion-chart {
+    height: 90px;
+    position: relative;
+    margin: 4px 0 8px;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .chart-bar {
+    flex: 1;
+    border-radius: 6px 6px 0 0;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .chart-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #b8a8a0;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .milestone-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f5eded;
+  }
+
+  .milestone-item:last-child { border-bottom: none; }
+
+  .milestone-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .milestone-text { flex: 1; }
+  .milestone-title { font-size: 14px; font-weight: 700; color: #3D2B2B; margin-bottom: 2px; }
+  .milestone-date { font-size: 11px; color: #b8a8a0; }
+  .milestone-locked { opacity: 0.4; }
+
+  /* ===== ROUTINES SCREEN ===== */
+  .routines-header {
+    background: linear-gradient(135deg, #7BAE7F 0%, #5A8C5A 100%);
+    padding: 20px 24px 28px;
+    color: white;
+  }
+
+  .routine-card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .routine-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+
+  .routine-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .routine-info { flex: 1; }
+  .routine-title { font-size: 15px; font-weight: 700; color: #3D2B2B; margin-bottom: 3px; }
+  .routine-desc { font-size: 12px; color: #9a8a85; line-height: 1.4; }
+  .routine-time { font-size: 11px; font-weight: 700; color: #7BAE7F; margin-top: 6px; }
+  .routine-done { font-size: 20px; color: #8FAF8C; }
+
+  .book-card {
+    background: linear-gradient(135deg, #fff5f0, #fff0f8);
+    border-radius: 18px;
+    padding: 18px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .book-cover {
+    width: 56px;
+    height: 76px;
+    background: linear-gradient(135deg, #A8C5A0, #7BAE7F);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .book-info { flex: 1; }
+  .book-tag { font-size: 10px; font-weight: 700; color: #A8C5A0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .book-title { font-size: 14px; font-weight: 700; color: #3D2B2B; margin-bottom: 3px; line-height: 1.3; }
+  .book-author { font-size: 12px; color: #9a8a85; }
+
+  .progress-bar-wrap { background: #f0e8e8; border-radius: 6px; height: 6px; margin-top: 10px; }
+  .progress-bar-fill { background: linear-gradient(90deg, #A8C5A0, #7BAE7F); height: 100%; border-radius: 6px; transition: width 0.5s; }
+
+  /* ===== COMMUNITY SCREEN ===== */
+  .community-header {
+    background: linear-gradient(135deg, #A8C5A0 0%, #b8d4b8 100%);
+    padding: 20px 24px 28px;
+    color: white;
+  }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .post-card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .post-meta { flex: 1; }
+  .post-name { font-size: 13px; font-weight: 700; color: #3D2B2B; }
+  .post-time { font-size: 11px; color: #b8a8a0; }
+  .post-stage {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 10px;
+    background: #e8f5e8;
+    color: #4A7C59;
+  }
+
+  .post-text { font-size: 14px; color: #4a3535; line-height: 1.6; margin-bottom: 14px; }
+
+  .post-actions { display: flex; gap: 8px; }
+
+  .reaction-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #fdf5f8;
+    border: none;
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #9a7a85;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .reaction-btn:hover, .reaction-btn.reacted {
+    background: #fde0eb;
+    color: #4A7C59;
+  }
+
+  .new-post-btn {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, #FDF8F5 60%, transparent);
+    padding: 16px 20px 8px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .fab {
+    background: #4A7C59;
+    color: white;
+    border: none;
+    border-radius: 28px;
+    padding: 14px 28px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(74, 124, 89, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .fab:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(74, 124, 89, 0.45); }
+
+  /* Onboarding overlay */
+  .onboarding {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, #A8C5A0 0%, #7BAE7F 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    z-index: 200;
+    text-align: center;
+  }
+
+  .onboarding.hidden { display: none; }
+
+  .onboarding-logo {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  .onboarding-brand {
+    font-size: 36px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .onboarding-tagline {
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 40px;
+    line-height: 1.5;
+  }
+
+  .onboarding-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    align-self: flex-start;
+  }
+
+  .onboarding-input {
+    width: 100%;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 16px;
+    padding: 16px 18px;
+    font-size: 16px;
+    font-family: inherit;
+    color: #3D2B2B;
+    outline: none;
+    margin-bottom: 16px;
+  }
+
+  .onboarding-input::placeholder { color: #c0b0b0; }
+
+  .onboarding-btn {
+    width: 100%;
+    background: white;
+    color: #4A7C59;
+    border: none;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  .onboarding-btn:hover { opacity: 0.92; }
+
+  .onboarding-note {
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+
+  /* Acceptance moment screen */
+  .acceptance-moment {
+    position: absolute;
+    inset: 0;
+    background: #1a0a0f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 190;
+    padding: 40px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+
+  .acceptance-moment.fade-in { opacity: 1; }
+  .acceptance-moment.fade-out { opacity: 0; }
+
+  .acceptance-moment-line {
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.5;
+    letter-spacing: -0.3px;
+    white-space: pre-line;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.8s ease 0.4s, transform 0.8s ease 0.4s;
+  }
+
+  .acceptance-moment.fade-in .acceptance-moment-line {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .acceptance-moment-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 40px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.8s ease 1s;
+  }
+
+  .acceptance-moment.fade-in .acceptance-moment-sub { opacity: 1; }
+
+  /* Toast */
+  .toast {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: #3D2B2B;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+
+  <!-- Onboarding Screen -->
+  <div class="onboarding" id="onboarding">
+    <div class="onboarding-logo">🌿</div>
+    <div class="onboarding-brand">Shero</div>
+    <div class="onboarding-tagline">Your daily space to heal,<br>grow, and come back to yourself.</div>
+    <div class="onboarding-label">What's your name?</div>
+    <input class="onboarding-input" id="name-input" type="text" placeholder="e.g. Sarah, Min, Cindy…" maxlength="30" />
+    <button class="onboarding-btn" onclick="startJourney()">Begin My Journey ✨</button>
+    <div class="onboarding-note">Your name is only seen by you.<br>Everything here is your safe space.</div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-icons">
+      <span>●●●</span>
+      <span>WiFi</span>
+      <span>🔋</span>
+    </div>
+  </div>
+
+  <!-- Acceptance daily moment screen -->
+  <div class="acceptance-moment" id="acceptance-moment">
+    <div class="acceptance-moment-line" id="acceptance-moment-line">You are not going back.</div>
+    <div class="acceptance-moment-sub">Shero · Day <span id="moment-day">1</span></div>
+  </div>
+
+  <!-- Compose sheet -->
+  <div class="compose-overlay" id="compose-overlay" onclick="closeCompose(event)">
+    <div class="compose-sheet" onclick="event.stopPropagation()">
+      <div class="compose-handle"></div>
+      <div class="compose-header">
+        <div class="compose-title">Share with the Circle</div>
+        <div class="compose-anon-toggle" id="anon-toggle" onclick="toggleAnon()">
+          <span id="anon-icon">🌿</span>
+          <span id="anon-label">Anonymous</span>
+        </div>
+      </div>
+      <textarea class="compose-textarea" id="compose-text" placeholder="What's on your mind? This is your safe space…" maxlength="300" oninput="updateCompose()"></textarea>
+      <div class="compose-footer">
+        <div class="compose-char"><span id="compose-count">0</span>/300</div>
+        <button class="compose-post-btn" id="compose-post-btn" onclick="submitPost()" disabled>Post 🌿</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grieving confirmation sheet -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-sheet">
+      <div class="confirm-handle"></div>
+      <div class="confirm-emoji">🫧</div>
+      <div class="confirm-title">Are you sure you're ready?</div>
+      <div class="confirm-body" id="confirm-body">You've been in the Grieving stage for 12 days. Most women find 30 days helps them truly process. It's okay to stay a little longer — there's no rush.</div>
+      <button class="confirm-yes" onclick="confirmAdvance()">Yes, I'm ready to move forward</button>
+      <button class="confirm-no" onclick="closeConfirm()">I'll stay a little longer 💜</button>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ===== HOME SCREEN ===== -->
+  <div class="screen active" id="screen-home">
+    <div class="home-header">
+      <div class="home-greeting" id="greeting-text">Good morning 🌿</div>
+      <div class="home-title">How are you today?</div>
+      <div class="streak-pill">🔥 7-day streak — you're showing up!</div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-label">Today's Mood</div>
+      <div class="mood-row">
+        <div class="mood-btn" onclick="selectMood(this)">
+          <span class="mood-emoji">😔</span>
+          <span class="mood-label">Low</span>
+        </div>
+        <div class="mood-btn" onclick="selectMood(this)">
+          <span class="mood-emoji">😶</span>
+          <span class="mood-label">Numb</span>
+        </div>
+        <div class="mood-btn" onclick="selectMood(this)">
+          <span class="mood-emoji">🙂</span>
+          <span class="mood-label">Okay</span>
+        </div>
+        <div class="mood-btn" onclick="selectMood(this)">
+          <span class="mood-emoji">😊</span>
+          <span class="mood-label">Good</span>
+        </div>
+        <div class="mood-btn" onclick="selectMood(this)">
+          <span class="mood-emoji">🥰</span>
+          <span class="mood-label">Blooming</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-label">Today's Prompt</div>
+      <div class="prompt-box">
+        <div class="prompt-q">💭 What's one thing you did today — even tiny — purely for yourself?</div>
+        <textarea class="journal-input" placeholder="Write whatever comes to mind... no rules here."></textarea>
+      </div>
+      <button class="save-btn" onclick="saveEntry()">Save Today's Entry ✨</button>
+    </div>
+
+    <div class="section-card">
+      <div class="section-label">My Healing Journey</div>
+
+      <!-- Stage progress dots -->
+      <div class="stages-strip">
+        <div class="stages-line"><div class="stages-line-fill" id="stages-line-fill" style="width:0%"></div></div>
+        <div class="stage-dot-wrap" onclick="peekStage(0)">
+          <div class="stage-dot current" id="dot-0">✓</div>
+          <div class="stage-dot-label current-label">Accep-tance</div>
+        </div>
+        <div class="stage-dot-wrap" onclick="peekStage(1)">
+          <div class="stage-dot" id="dot-1">🫧</div>
+          <div class="stage-dot-label">Grieving</div>
+        </div>
+        <div class="stage-dot-wrap" onclick="peekStage(2)">
+          <div class="stage-dot" id="dot-2">🔍</div>
+          <div class="stage-dot-label">Rediscov-ering</div>
+        </div>
+        <div class="stage-dot-wrap" onclick="peekStage(3)">
+          <div class="stage-dot" id="dot-3">🦋</div>
+          <div class="stage-dot-label">Rebuilding</div>
+        </div>
+        <div class="stage-dot-wrap" onclick="peekStage(4)">
+          <div class="stage-dot" id="dot-4">🌿</div>
+          <div class="stage-dot-label">Thriving</div>
+        </div>
+      </div>
+
+      <!-- Current stage card -->
+      <div class="current-stage-card">
+        <div class="current-stage-tag" id="stage-tag">Stage 2 of 5</div>
+        <div class="current-stage-name" id="stage-name">💧 Grieving</div>
+        <div class="current-stage-desc" id="stage-desc">Allowing yourself to feel the pain without running from it. There is no shortcut through grief — only through it.</div>
+
+        <!-- App suggestion (shows after engagement) -->
+        <div class="stage-suggestion" id="stage-suggestion" style="display:none;">
+          <span style="font-size:20px;">🌱</span>
+          <div class="stage-suggestion-text">You've had <strong>5 positive days</strong> this week. You might be ready for the next stage.</div>
+          <button class="stage-suggest-btn" onclick="advanceStage()">I'm ready</button>
+        </div>
+
+        <!-- Grieving soft advisory -->
+        <div class="grief-advisory" id="grief-advisory">
+          <div class="grief-advisory-top">
+            <div class="grief-days-label" id="grief-days-label">🌿 Days in Acceptance</div>
+            <div class="grief-days-num"><span id="grief-days-count">12</span> days</div>
+          </div>
+          <div class="grief-track">
+            <div class="grief-track-fill" id="grief-track-fill" style="width:40%;"></div>
+          </div>
+          <div class="grief-advisory-note" id="grief-advisory-note">
+            Most women find they need at least 30 days here. You're doing well — take all the time you need. 💜
+          </div>
+        </div>
+
+        <!-- 30-day lock (Acceptance only) -->
+        <div class="days-lock-bar" id="days-lock-bar" style="display:none;">
+          <div class="days-lock-top">
+            <div class="days-lock-label">🗓 30-Day Acceptance</div>
+            <div class="days-lock-count"><span id="days-done">7</span>/30</div>
+          </div>
+          <div class="days-lock-track">
+            <div class="days-lock-fill" id="days-lock-fill" style="width:23%;"></div>
+          </div>
+          <div class="days-lock-note" id="days-lock-note">23 more days before you can move forward — and that's okay. Take every one of them. 💛</div>
+        </div>
+
+        <!-- Self-move button -->
+        <button class="stage-self-btn" id="self-advance-btn" onclick="selfAdvance()">I feel ready to move forward →</button>
+      </div>
+
+      <!-- Acceptance-only section -->
+      <div class="acceptance-section" id="acceptance-section" style="display:none;">
+
+        <!-- Path chooser -->
+        <div class="path-chooser" id="path-chooser">
+          <div class="path-chooser-title">Choose your acceptance path 🌿</div>
+          <div class="path-chooser-sub">Acceptance takes time — at least 30 days. Pick the approach that feels right for you. You can always switch.</div>
+          <div class="path-options">
+            <div class="path-option" id="path-ritual" onclick="choosePath('ritual')">
+              <div class="path-option-icon">✍️</div>
+              <div class="path-option-name">Daily Ritual</div>
+              <div class="path-option-desc">Complete a sentence each morning for 30 days</div>
+            </div>
+            <div class="path-option" id="path-score" onclick="choosePath('score')">
+              <div class="path-option-icon">📊</div>
+              <div class="path-option-name">Acceptance Score</div>
+              <div class="path-option-desc">App tracks your signals & tells you when you're ready</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Ritual Card -->
+        <div class="ritual-card" id="ritual-card">
+          <div class="ritual-day" id="ritual-day-label">Day 1 of 30</div>
+          <div class="ritual-prompt">Today, I accept that <span id="ritual-hint">...</span></div>
+          <textarea class="ritual-input" id="ritual-input" placeholder="write it in your own words, honestly..."></textarea>
+          <button class="ritual-save-btn" onclick="saveRitual()">Save Today's Acceptance ✨</button>
+          <!-- 30-day calendar -->
+          <div class="calendar-grid" id="ritual-calendar"></div>
+          <div style="font-size:11px;color:#b8a8a0;margin-top:8px;text-align:center;" id="ritual-progress-label">7 of 30 days completed</div>
+        </div>
+
+        <!-- Score Card -->
+        <div class="score-card" id="score-card">
+          <div class="score-title">Your Acceptance Score</div>
+          <div class="score-row">
+            <div class="score-label">Emotional steadiness</div>
+            <div class="score-bar-wrap"><div class="score-bar-fill" style="width:58%"></div></div>
+            <div class="score-pct">58%</div>
+          </div>
+          <div class="score-row">
+            <div class="score-label">Journal consistency</div>
+            <div class="score-bar-wrap"><div class="score-bar-fill" style="width:73%"></div></div>
+            <div class="score-pct">73%</div>
+          </div>
+          <div class="score-row">
+            <div class="score-label">Positive mood days</div>
+            <div class="score-bar-wrap"><div class="score-bar-fill" style="width:42%"></div></div>
+            <div class="score-pct">42%</div>
+          </div>
+          <div class="score-total">
+            <div class="score-total-num">57%</div>
+            <div class="score-total-label">Overall Acceptance Score · Keep going 💛</div>
+          </div>
+          <div style="font-size:12px;color:#9a7a85;margin-top:12px;line-height:1.5;text-align:center;">The app will gently let you know when your score reaches <strong>80%</strong> over 30 days.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="home-bottom-spacer"></div>
+  </div>
+
+  <!-- ===== JOURNEY SCREEN ===== -->
+  <div class="screen" id="screen-journey">
+    <div class="journey-header">
+      <div class="journey-title">My Journey 🌱</div>
+      <div class="journey-sub">Every step forward counts. Look how far you've come.</div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-label">Mood Tracking</div>
+
+      <!-- Toggle -->
+      <div class="track-toggle">
+        <div class="track-tab active" onclick="switchTrack('week', this)">Week</div>
+        <div class="track-tab" onclick="switchTrack('month', this)">Month</div>
+        <div class="track-tab" onclick="switchTrack('3months', this)">3 Months</div>
+        <div class="track-tab" onclick="switchTrack('6months', this)">6 Months</div>
+      </div>
+
+      <!-- Week View -->
+      <div class="track-chart active" id="track-week">
+        <div class="bar-chart">
+          <div class="chart-bar" style="height:35%;background:#e8f5e8;"></div>
+          <div class="chart-bar" style="height:28%;background:#e8f5e8;"></div>
+          <div class="chart-bar" style="height:50%;background:#f5d5e8;"></div>
+          <div class="chart-bar" style="height:45%;background:#ecd5f0;"></div>
+          <div class="chart-bar" style="height:65%;background:#d5e8f0;"></div>
+          <div class="chart-bar" style="height:72%;background:#d5eed8;"></div>
+          <div class="chart-bar" style="height:80%;background:#8FAF8C;opacity:0.85;"></div>
+        </div>
+        <div class="bar-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span></div>
+        <div class="track-summary">
+          <div class="track-stat"><div class="track-stat-num">5</div><div class="track-stat-label">Days logged</div></div>
+          <div class="track-stat"><div class="track-stat-num">😊</div><div class="track-stat-label">Most common mood</div></div>
+          <div class="track-stat"><div class="track-stat-num">↑72%</div><div class="track-stat-label">vs last week</div></div>
+        </div>
+      </div>
+
+      <!-- Month View -->
+      <div class="track-chart" id="track-month">
+        <div class="bar-chart" id="month-bars" style="gap:2px;"></div>
+        <div class="bar-labels" id="month-labels"></div>
+        <div class="track-summary">
+          <div class="track-stat"><div class="track-stat-num">22</div><div class="track-stat-label">Days logged</div></div>
+          <div class="track-stat"><div class="track-stat-num">14</div><div class="track-stat-label">Good+ days</div></div>
+          <div class="track-stat"><div class="track-stat-num">↑40%</div><div class="track-stat-label">vs last month</div></div>
+        </div>
+      </div>
+
+      <!-- 3 Month View -->
+      <div class="track-chart" id="track-3months">
+        <div class="bar-chart" id="threemonth-bars" style="gap:2px;"></div>
+        <div class="bar-labels" id="threemonth-labels"></div>
+        <div class="track-summary">
+          <div class="track-stat"><div class="track-stat-num">67</div><div class="track-stat-label">Days logged</div></div>
+          <div class="track-stat"><div class="track-stat-num">🌱</div><div class="track-stat-label">Stage progress</div></div>
+          <div class="track-stat"><div class="track-stat-num">↑3×</div><div class="track-stat-label">Overall growth</div></div>
+        </div>
+      </div>
+
+      <!-- 6 Month View -->
+      <div class="track-chart" id="track-6months">
+        <div class="bar-chart" id="sixmonth-bars" style="gap:1px;"></div>
+        <div class="bar-labels" id="sixmonth-labels"></div>
+        <div class="track-summary">
+          <div class="track-stat"><div class="track-stat-num">142</div><div class="track-stat-label">Days logged</div></div>
+          <div class="track-stat"><div class="track-stat-num">🦋</div><div class="track-stat-label">Now Rebuilding</div></div>
+          <div class="track-stat"><div class="track-stat-num">↑5×</div><div class="track-stat-label">Since day one</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-label">Milestones Unlocked</div>
+
+      <div class="milestone-item">
+        <div class="milestone-badge" style="background:#e8f5e8;">🌿</div>
+        <div class="milestone-text">
+          <div class="milestone-title">First entry written</div>
+          <div class="milestone-date">Unlocked · Sept 22</div>
+        </div>
+        <span>✅</span>
+      </div>
+
+      <div class="milestone-item">
+        <div class="milestone-badge" style="background:#fef3e2;">🔥</div>
+        <div class="milestone-text">
+          <div class="milestone-title">7-day streak</div>
+          <div class="milestone-date">Unlocked · Sept 29</div>
+        </div>
+        <span>✅</span>
+      </div>
+
+      <div class="milestone-item">
+        <div class="milestone-badge" style="background:#e8f5e8;">☀️</div>
+        <div class="milestone-text">
+          <div class="milestone-title">First "Good" mood day</div>
+          <div class="milestone-date">Unlocked · Sept 25</div>
+        </div>
+        <span>✅</span>
+      </div>
+
+      <div class="milestone-item milestone-locked">
+        <div class="milestone-badge" style="background:#f0f0f0;">💪</div>
+        <div class="milestone-text">
+          <div class="milestone-title">30-day journey</div>
+          <div class="milestone-date">Keep going — 23 days left</div>
+        </div>
+        <span>🔒</span>
+      </div>
+
+      <div class="milestone-item milestone-locked">
+        <div class="milestone-badge" style="background:#f0f0f0;">👑</div>
+        <div class="milestone-text">
+          <div class="milestone-title">Shero of the Month</div>
+          <div class="milestone-date">Complete 30-day streak</div>
+        </div>
+        <span>🔒</span>
+      </div>
+    </div>
+
+    <div class="section-card" style="margin-bottom:16px;">
+      <div class="section-label">My Journal Entries</div>
+
+      <div style="padding:12px 0; border-bottom:1px solid #f5eded;">
+        <div style="font-size:11px;color:#b8a8a0;font-weight:600;margin-bottom:4px;">Today · 😊 Good</div>
+        <div style="font-size:14px;color:#4a3535;line-height:1.5;">I went for a walk by myself and actually enjoyed it. Small, but real.</div>
+      </div>
+
+      <div style="padding:12px 0; border-bottom:1px solid #f5eded;">
+        <div style="font-size:11px;color:#b8a8a0;font-weight:600;margin-bottom:4px;">Sept 28 · ✨ Blooming</div>
+        <div style="font-size:14px;color:#4a3535;line-height:1.5;">I cooked a proper meal for myself. Just me. It felt like self-respect.</div>
+      </div>
+
+      <div style="padding:12px 0;">
+        <div style="font-size:11px;color:#b8a8a0;font-weight:600;margin-bottom:4px;">Sept 27 · 😔 Low</div>
+        <div style="font-size:14px;color:#4a3535;line-height:1.5;">Hard day. Cried a lot. But I still showed up and wrote this. That counts.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ROUTINES SCREEN ===== -->
+  <div class="screen" id="screen-routines">
+    <div class="routines-header">
+      <div class="journey-title">Daily Routines 🌙</div>
+      <div class="journey-sub">Small practices, big shifts. Let's do today.</div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-label">Today's Practices</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+
+        <div class="routine-card" onclick="completeRoutine(this, 'Morning grounding done ☀️')">
+          <div class="routine-icon" style="background:#fef3e2;">☀️</div>
+          <div class="routine-info">
+            <div class="routine-title">Morning Grounding</div>
+            <div class="routine-desc">Take 5 deep breaths. Then name 3 things you are good at, 3 things you are proud of, or 3 qualities that make you a good person.</div>
+            <div class="routine-time">2 min · Morning</div>
+          </div>
+          <span class="routine-done" style="opacity:0.3">✓</span>
+        </div>
+
+        <div class="routine-card" onclick="completeRoutine(this, 'Journaling done 📝')">
+          <div class="routine-icon" style="background:#e8f5e8;">📝</div>
+          <div class="routine-info">
+            <div class="routine-title">Daily Journal Entry</div>
+            <div class="routine-desc">Answer today's prompt. No edits, no judgment — just truth.</div>
+            <div class="routine-time">5–10 min · Anytime</div>
+          </div>
+          <span class="routine-done">✓</span>
+        </div>
+
+        <div class="routine-card" onclick="completeRoutine(this, 'Solo time done 🌿')">
+          <div class="routine-icon" style="background:#e8f5e8;">🌟</div>
+          <div class="routine-info">
+            <div class="routine-title">Solo Time</div>
+            <div class="routine-desc">15–30 min of anything YOU enjoy — walk, dance, sing, exercise, read, create. Not for your kids, your friends, or a partner. Just for you.</div>
+            <div class="routine-time">15–30 min · Anytime</div>
+          </div>
+          <span class="routine-done" style="opacity:0.3">✓</span>
+        </div>
+
+        <div class="routine-card" onclick="completeRoutine(this, 'Evening reflection done 🌙')">
+          <div class="routine-icon" style="background:#ede8f8;">🌙</div>
+          <div class="routine-info">
+            <div class="routine-title">Evening Reflection</div>
+            <div class="routine-desc">How did your solo time feel today? Did it feel truly yours — free, peaceful, strange, even guilty? Sit with that feeling. There's no right answer.</div>
+            <div class="routine-time">5 min · Evening</div>
+          </div>
+          <span class="routine-done" style="opacity:0.3">✓</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card" style="margin-bottom:16px;">
+      <div class="section-label">This Week's Read</div>
+      <div class="book-card">
+        <div class="book-cover">📖</div>
+        <div class="book-info">
+          <div class="book-tag">📚 Book Club Pick</div>
+          <div class="book-title">The Courage to Be Disliked</div>
+          <div class="book-author">Kishimi Ichiro & Koga Fumitake</div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" style="width:42%"></div>
+          </div>
+          <div style="font-size:11px;color:#b8a8a0;margin-top:4px;">42% · Keep reading 💛</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== COMMUNITY SCREEN ===== -->
+  <div class="screen" id="screen-community">
+    <div class="community-header">
+      <div class="live-badge"><span class="live-dot"></span> 2,847 Sheros Online</div>
+      <div class="journey-title">Our Circle 💬</div>
+      <div class="journey-sub">Anonymous, honest, and always safe here.</div>
+    </div>
+
+    <div style="padding:0 20px;">
+      <!-- Weekly theme banner -->
+      <div style="background:linear-gradient(135deg,#f0f8f2,#f5eeff);border-radius:18px;padding:16px;margin:16px 0 12px;border:1px solid #c8e0c8;">
+        <div style="font-size:10px;font-weight:700;color:#7BAE7F;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">🗓 This Week's Theme</div>
+        <div style="font-size:15px;font-weight:700;color:#3D2B2B;margin-bottom:4px;">"Learning to enjoy my own company"</div>
+        <div style="font-size:12px;color:#9a8a85;">Join the live sharing session · Wed 8PM 🎙</div>
+      </div>
+
+      <!-- Post 1 -->
+      <div class="post-card" style="margin-bottom:12px;">
+        <div class="post-header">
+          <div class="avatar" style="background:#e8f5e8;">🌿</div>
+          <div class="post-meta">
+            <div class="post-name">Anonymous Shero</div>
+            <div class="post-time">12 min ago</div>
+          </div>
+          <div class="post-stage">Rebuilding</div>
+        </div>
+        <div class="post-text">I booked a solo trip today. First time in 11 years I'm doing something just for me. My hands were shaking when I clicked confirm. But I did it. 🌍</div>
+        <div class="post-actions">
+          <button class="reaction-btn" onclick="react(this, '💛 I see you')">💛 I see you · 48</button>
+          <button class="reaction-btn" onclick="react(this, 'That\'s brave 🔥')">🔥 That's brave · 31</button>
+        </div>
+      </div>
+
+      <!-- Post 2 -->
+      <div class="post-card" style="margin-bottom:12px;">
+        <div class="post-header">
+          <div class="avatar" style="background:#e8f5e8;">🌿</div>
+          <div class="post-meta">
+            <div class="post-name">Anonymous Shero</div>
+            <div class="post-time">1 hr ago</div>
+          </div>
+          <div class="post-stage">Growing</div>
+        </div>
+        <div class="post-text">Someone judged me today for how I looked. The old me would have cried and apologised. The new me just... walked away. I don't know when that changed, but it did. 💪</div>
+        <div class="post-actions">
+          <button class="reaction-btn reacted" onclick="react(this, '💛 I see you')">💛 I see you · 112</button>
+          <button class="reaction-btn" onclick="react(this, 'That\'s brave 🔥')">🔥 That's brave · 87</button>
+        </div>
+      </div>
+
+      <!-- Post 3 -->
+      <div class="post-card" style="margin-bottom:80px;">
+        <div class="post-header">
+          <div class="avatar" style="background:#ede8f8;">✨</div>
+          <div class="post-meta">
+            <div class="post-name">Anonymous Shero</div>
+            <div class="post-time">3 hrs ago</div>
+          </div>
+          <div class="post-stage">Raw</div>
+        </div>
+        <div class="post-text">Day 4. Still crying every morning. But I got up, made coffee, and opened this app. If you're also on day 4 — hi. We're doing this together. 🤍</div>
+        <div class="post-actions">
+          <button class="reaction-btn" onclick="react(this, '💛 I see you')">💛 I see you · 203</button>
+          <button class="reaction-btn" onclick="react(this, 'That\'s brave 🔥')">🔥 That's brave · 165</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="new-post-btn">
+      <button class="fab" onclick="openCompose()">Share something</button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('home', this)">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Today</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('journey', this)">
+      <span class="nav-icon">🌱</span>
+      <span class="nav-label">Journey</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('routines', this)">
+      <span class="nav-icon">🌙</span>
+      <span class="nav-label">Routines</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('community', this)">
+      <span class="nav-icon">💬</span>
+      <span class="nav-label">Circle</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ===== STAGES LOGIC =====
+  const stages = [
+    { name: '✓ Acceptance', desc: 'Accepting the relationship is ending, whether you\'re ready or not. This takes courage just to acknowledge.' },
+    { name: '🫧 Grieving', desc: 'Allowing yourself to feel the pain without running from it. There is no shortcut through grief — only through it.' },
+    { name: '🔍 Rediscovering', desc: 'Getting to know yourself again — who are you without this relationship? This is where you meet yourself.' },
+    { name: '🦋 Rebuilding', desc: 'Creating new habits, boundaries, and a life that is truly yours. One small choice at a time.' },
+    { name: '🌳 Thriving', desc: 'Living fully, independently, and with genuine love for yourself. You made it here.' }
+  ];
+
+  let currentStage = 0; // Start at Acceptance to show soft advisory
+  let griefDays = 12;
+  let positiveDays = 5; // Simulated for demo — triggers suggestion
+
+  // ===== TRACKING CHART =====
+  const moodColors = ['#e8f5e8','#e8f5e8','#f5d5e8','#ecd5f0','#d5eed8'];
+  // 30 days of sample mood data (0-4 scale)
+  const monthData = [1,0,1,2,2,3,2,3,3,4,2,3,4,3,2,3,4,3,4,3,4,4,3,4,3,4,4,3,4,4];
+  const monthLabels = ['1','','','','5','','','','','10','','','','','15','','','','','20','','','','','25','','','','','30'];
+  // 90 days — weekly averages for 3-month view
+  const threeMonthWeeklyAvg = [1.2,1.5,1.8,2.0,2.2,2.5,2.3,2.8,3.0,2.9,3.2,3.5];
+  const threeMonthLabels = ['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'];
+
+  // 6 months — monthly averages (6 bars) + weekly detail (26 bars)
+  const sixMonthMonthlyAvg = [1.1, 1.6, 2.2, 2.8, 3.2, 3.7];
+  const sixMonthLabels = ['M1','M2','M3','M4','M5','M6'];
+
+  function buildMonthChart() {
+    const bars = document.getElementById('month-bars');
+    const labels = document.getElementById('month-labels');
+    bars.innerHTML = ''; labels.innerHTML = '';
+    monthData.forEach((v, i) => {
+      const b = document.createElement('div');
+      b.className = 'chart-bar';
+      b.style.height = (20 + v * 18) + '%';
+      b.style.background = moodColors[v];
+      bars.appendChild(b);
+      const l = document.createElement('span');
+      l.textContent = monthLabels[i];
+      l.style.fontSize = '8px';
+      labels.appendChild(l);
+    });
+  }
+
+  function build3MonthChart() {
+    const bars = document.getElementById('threemonth-bars');
+    const labels = document.getElementById('threemonth-labels');
+    bars.innerHTML = ''; labels.innerHTML = '';
+    threeMonthWeeklyAvg.forEach((v, i) => {
+      const b = document.createElement('div');
+      b.className = 'chart-bar';
+      b.style.height = (v / 4 * 85) + '%';
+      b.style.background = `linear-gradient(to top, #A8C5A0, #8FAF8C)`;
+      b.style.opacity = '0.8';
+      bars.appendChild(b);
+      const l = document.createElement('span');
+      l.textContent = threeMonthLabels[i];
+      l.style.fontSize = '9px';
+      labels.appendChild(l);
+    });
+  }
+
+  function build6MonthChart() {
+    const bars = document.getElementById('sixmonth-bars');
+    const labels = document.getElementById('sixmonth-labels');
+    bars.innerHTML = ''; labels.innerHTML = '';
+    sixMonthMonthlyAvg.forEach((v, i) => {
+      const b = document.createElement('div');
+      b.className = 'chart-bar';
+      b.style.height = (v / 4 * 85) + '%';
+      b.style.background = `linear-gradient(to top, #A8C5A0, #8FAF8C)`;
+      b.style.opacity = '0.85';
+      b.style.borderRadius = '6px 6px 0 0';
+      bars.appendChild(b);
+      const l = document.createElement('span');
+      l.textContent = sixMonthLabels[i];
+      l.style.fontSize = '10px';
+      labels.appendChild(l);
+    });
+  }
+
+  function switchTrack(view, el) {
+    document.querySelectorAll('.track-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.track-chart').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('track-' + view).classList.add('active');
+    if (view === 'month') buildMonthChart();
+    if (view === '3months') build3MonthChart();
+    if (view === '6months') build6MonthChart();
+  }
+
+  // ===== ACCEPTANCE RITUAL HINTS ===== (rotate daily)
+  const ritualHints = [
+    'this relationship has ended.',
+    'I cannot change what has happened.',
+    'my feelings right now are valid.',
+    'healing will take as long as it takes.',
+    'I am allowed to grieve.',
+    'I deserve to be at peace.',
+    'letting go is an act of strength.',
+    'my future is still full of possibility.',
+  ];
+  let ritualDay = 7; // demo: day 7 already done
+  let chosenPath = null;
+
+  function choosePath(path) {
+    chosenPath = path;
+    document.getElementById('path-ritual').classList.toggle('selected', path === 'ritual');
+    document.getElementById('path-score').classList.toggle('selected', path === 'score');
+    document.getElementById('ritual-card').classList.toggle('visible', path === 'ritual');
+    document.getElementById('score-card').classList.toggle('visible', path === 'score');
+    if (path === 'ritual') buildRitualCalendar();
+    showToast(path === 'ritual' ? 'Daily Ritual path chosen ✍️' : 'Acceptance Score path chosen 📊');
+  }
+
+  function buildRitualCalendar() {
+    const grid = document.getElementById('ritual-calendar');
+    grid.innerHTML = '';
+    for (let i = 0; i < 30; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'cal-dot' + (i < ritualDay ? ' done' : i === ritualDay ? ' today' : '');
+      grid.appendChild(dot);
+    }
+    document.getElementById('ritual-day-label').textContent = 'Day ' + (ritualDay + 1) + ' of 30';
+    document.getElementById('ritual-hint').textContent = ritualHints[ritualDay % ritualHints.length];
+    document.getElementById('ritual-progress-label').textContent = ritualDay + ' of 30 days completed';
+  }
+
+  function saveRitual() {
+    const val = document.getElementById('ritual-input').value.trim();
+    if (!val) { showToast('Write something — even one word 💛'); return; }
+    ritualDay = Math.min(ritualDay + 1, 29);
+    document.getElementById('ritual-input').value = '';
+    buildRitualCalendar();
+    showToast('Day ' + ritualDay + ' recorded. You showed up 🌿');
+  }
+
+  function showAcceptanceSection(visible) {
+    document.getElementById('acceptance-section').style.display = visible ? 'block' : 'none';
+  }
+
+  function renderStages() {
+    const fillPercent = [0, 25, 50, 75, 100];
+    document.getElementById('stages-line-fill').style.width = fillPercent[currentStage] + '%';
+    stages.forEach((s, i) => {
+      const dot = document.getElementById('dot-' + i);
+      dot.className = 'stage-dot';
+      if (i < currentStage) { dot.className = 'stage-dot done'; dot.textContent = '✓'; }
+      else if (i === currentStage) { dot.className = 'stage-dot current'; dot.textContent = ['✓','🫧','🔍','🦋','🌳'][i]; }
+      else { dot.textContent = ['✓','🫧','🔍','🦋','🌳'][i]; }
+    });
+    document.getElementById('stage-tag').textContent = 'Stage ' + (currentStage + 1) + ' of 5';
+    document.getElementById('stage-name').textContent = stages[currentStage].name;
+    document.getElementById('stage-desc').textContent = stages[currentStage].desc;
+    // Show app suggestion if enough positive days
+    if (positiveDays >= 5 && currentStage < 4) {
+      document.getElementById('stage-suggestion').style.display = 'flex';
+    }
+    // Show acceptance section only on Stage 1
+    showAcceptanceSection(currentStage === 0);
+
+    const lockBar = document.getElementById('days-lock-bar');
+    const selfBtn = document.getElementById('self-advance-btn');
+    lockBar.style.display = 'none';
+    selfBtn.classList.remove('locked');
+    selfBtn.textContent = 'I feel ready to move forward →';
+
+    if (currentStage === 0) {
+      const daysCompleted = ritualDay;
+      const pct = Math.min(Math.round((daysCompleted / 30) * 100), 100);
+      document.getElementById('grief-advisory').classList.add('visible');
+      document.getElementById('grief-days-label').textContent = '🌿 Days in Acceptance';
+      document.getElementById('grief-days-count').textContent = daysCompleted;
+      document.getElementById('grief-track-fill').style.width = pct + '%';
+      document.getElementById('grief-advisory-note').textContent = daysCompleted >= 30
+        ? 'You\'ve given yourself 30 days of acceptance. Whenever you feel ready, it\'s okay to move forward. 🌿'
+        : 'Most women need at least 30 days to truly accept this. You\'re doing well — ' + (30 - daysCompleted) + ' more days suggested. 💛';
+      document.getElementById('confirm-body').textContent = daysCompleted >= 30
+        ? 'You\'ve spent ' + daysCompleted + ' days in Acceptance. You\'ve done the work. Trust yourself.'
+        : 'You\'ve been in Acceptance for ' + daysCompleted + ' days. Most women find 30 days helps it truly sink in. It\'s okay to stay a little longer — there\'s no rush.';
+    } else if (currentStage === 1) {
+      const pct = Math.min(Math.round((griefDays / 30) * 100), 100);
+      document.getElementById('grief-advisory').classList.add('visible');
+      document.getElementById('grief-days-label').textContent = '🫧 Days in Grieving';
+      document.getElementById('grief-days-count').textContent = griefDays;
+      document.getElementById('grief-track-fill').style.width = pct + '%';
+      document.getElementById('grief-advisory-note').textContent = griefDays >= 30
+        ? 'You\'ve given yourself 30 days. Whenever you feel ready, it\'s okay to move forward. 💜'
+        : 'Most women find they need at least 30 days here. You\'re doing well — ' + (30 - griefDays) + ' more days suggested. 💜';
+      document.getElementById('confirm-body').textContent = griefDays >= 30
+        ? 'You\'ve spent ' + griefDays + ' days in Grieving. You\'ve done the work. Trust yourself.'
+        : 'You\'ve been in Grieving for ' + griefDays + ' days. Most women find 30 days helps them truly process. It\'s okay to stay a little longer — there\'s no rush.';
+    } else {
+      lockBar.style.display = 'none';
+      document.getElementById('grief-advisory').classList.remove('visible');
+      selfBtn.classList.remove('locked');
+      selfBtn.textContent = 'I feel ready to move forward →';
+    }
+  }
+
+  function advanceStage() {
+    if (currentStage < 4) {
+      currentStage++;
+      positiveDays = 0;
+      renderStages();
+      showToast('Welcome to ' + stages[currentStage].name + ' 🌱');
+    } else {
+      showToast('You are Thriving! 🎉 You did it.');
+    }
+  }
+
+  function selfAdvance() {
+    if (currentStage === 0 && ritualDay < 30) {
+      document.getElementById('confirm-overlay').classList.add('visible');
+      return;
+    }
+    if (currentStage === 1 && griefDays < 30) {
+      // Soft check — show confirmation popup
+      document.getElementById('confirm-overlay').classList.add('visible');
+      return;
+    }
+    if (currentStage < 4) {
+      const next = stages[currentStage + 1].name;
+      showToast('Moving to ' + next + ' — you\'re ready 💪');
+      setTimeout(() => { currentStage++; renderStages(); }, 1000);
+    } else {
+      showToast('You are already Thriving ✨ You made it!');
+    }
+  }
+
+  // ===== COMPOSE SHEET =====
+  let isAnonymous = true;
+
+  function openCompose() {
+    document.getElementById('compose-overlay').classList.add('visible');
+    setTimeout(() => document.getElementById('compose-text').focus(), 200);
+  }
+
+  function closeCompose(e) {
+    document.getElementById('compose-overlay').classList.remove('visible');
+    document.getElementById('compose-text').value = '';
+    document.getElementById('compose-count').textContent = '0';
+    document.getElementById('compose-post-btn').disabled = true;
+  }
+
+  function updateCompose() {
+    const len = document.getElementById('compose-text').value.length;
+    document.getElementById('compose-count').textContent = len;
+    document.getElementById('compose-post-btn').disabled = len === 0;
+  }
+
+  function toggleAnon() {
+    isAnonymous = !isAnonymous;
+    document.getElementById('anon-icon').textContent = isAnonymous ? '🌿' : '✏️';
+    document.getElementById('anon-label').textContent = isAnonymous ? 'Anonymous' : 'Show username';
+  }
+
+  function submitPost() {
+    const text = document.getElementById('compose-text').value.trim();
+    if (!text) return;
+    closeCompose();
+    showToast(isAnonymous ? 'Shared anonymously 🌿 The Circle sees you' : 'Shared with the Circle 💛');
+  }
+
+  function confirmAdvance() {
+    closeConfirm();
+    if (currentStage < 4) {
+      const next = stages[currentStage + 1].name;
+      showToast('Moving to ' + next + ' — trust yourself 💪');
+      setTimeout(() => { currentStage++; renderStages(); }, 1000);
+    }
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('visible');
+  }
+
+  function peekStage(i) {
+    if (i <= currentStage) {
+      showToast(i < currentStage ? '✓ ' + stages[i].name + ' — completed' : 'You are here: ' + stages[i].name);
+    } else {
+      showToast('Coming soon: ' + stages[i].name + ' 🌱');
+    }
+  }
+
+  window.addEventListener('load', renderStages);
+
+  // ===== NAME & GREETING LOGIC =====
+  let userName = '';
+
+  function getTimeGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  const acceptanceMoments = [
+    'You are not looking back.\nMove forward.',
+    'You are not looking back.\nMove forward.',
+    'You are not looking back.\nMove forward.',
+    'You are not looking back.\nMove forward.',
+    'You are not looking back.\nMove forward.',
+    'You are not looking back.\nMove forward.',
+    'You are not looking back.\nMove forward.',
+  ];
+
+  function showAcceptanceMoment(callback) {
+    if (currentStage !== 0) { callback(); return; }
+    const line = acceptanceMoments[ritualDay % acceptanceMoments.length];
+    const screen = document.getElementById('acceptance-moment');
+    document.getElementById('acceptance-moment-line').textContent = line;
+    document.getElementById('moment-day').textContent = ritualDay + 1;
+    screen.style.display = 'flex';
+    // Fade in
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => screen.classList.add('fade-in'));
+    });
+    // Hold 2.5s then fade out
+    setTimeout(() => {
+      screen.classList.add('fade-out');
+      screen.classList.remove('fade-in');
+      setTimeout(() => {
+        screen.style.display = 'none';
+        screen.classList.remove('fade-out');
+        callback();
+      }, 800);
+    }, 2800);
+  }
+
+  function startJourney() {
+    const input = document.getElementById('name-input').value.trim();
+    if (!input) { showToast('Please enter your name 💛'); return; }
+    userName = input;
+    document.getElementById('greeting-text').textContent = getTimeGreeting() + ', ' + userName + ' 🌿';
+    document.getElementById('onboarding').classList.add('hidden');
+    // Show acceptance moment first if in Stage 1
+    showAcceptanceMoment(() => {
+      showToast('Welcome to Shero, ' + userName + ' ✨');
+    });
+  }
+
+  // Set greeting on load if name already known
+  window.addEventListener('load', () => {
+    document.getElementById('greeting-text').textContent = getTimeGreeting() + ' 🌿';
+  });
+
+  function switchTab(name, el) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function selectMood(el) {
+    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    const label = el.querySelector('.mood-label').textContent;
+    showToast('Mood logged: ' + el.querySelector('.mood-emoji').textContent + ' ' + label);
+  }
+
+  function saveEntry() {
+    const text = document.querySelector('.journal-input').value;
+    if (!text.trim()) {
+      showToast('Write something first 💛');
+      return;
+    }
+    showToast('Entry saved ✨ You showed up today!');
+    document.querySelector('.journal-input').value = '';
+  }
+
+  function completeRoutine(el, msg) {
+    const done = el.querySelector('.routine-done');
+    done.style.opacity = done.style.opacity === '1' || done.style.opacity === '' ? '0.3' : '1';
+    if (done.style.opacity === '1') showToast(msg);
+  }
+
+  function react(btn, msg) {
+    btn.classList.toggle('reacted');
+    const parts = btn.textContent.split(' · ');
+    const count = parseInt(parts[parts.length - 1]);
+    const newCount = btn.classList.contains('reacted') ? count + 1 : count - 1;
+    btn.textContent = parts.slice(0, -1).join(' · ') + ' · ' + newCount;
+    if (btn.classList.contains('reacted')) showToast(msg + ' sent 💛');
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+
+</body>
+</html>
